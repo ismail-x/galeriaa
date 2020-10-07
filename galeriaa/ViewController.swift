@@ -16,6 +16,14 @@ class ViewController:  UICollectionViewController, UIImagePickerControllerDelega
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewPerson))
         
+        let defaults = UserDefaults.standard
+        
+        if let savedPeople = defaults.object(forKey: "people") as? Data {
+            if let decodedPeople = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(savedPeople) as? [Person] {
+                people = decodedPeople
+            }
+        }
+        
     }
     
     
@@ -61,6 +69,7 @@ class ViewController:  UICollectionViewController, UIImagePickerControllerDelega
         
         let person = Person(name: "Unknown", image: imageName)
         people.append(person)
+        save()
         collectionView.reloadData()
         
         dismiss(animated: true)
@@ -79,6 +88,7 @@ class ViewController:  UICollectionViewController, UIImagePickerControllerDelega
         ac.addAction(UIAlertAction(title: "OK", style: .default) { [unowned self, ac] _ in
             let newName = ac.textFields![0]
             person.name = newName.text!
+            self.save()
 
             self.collectionView?.reloadData()
         })
@@ -89,6 +99,13 @@ class ViewController:  UICollectionViewController, UIImagePickerControllerDelega
     func getDocumentsDirectory() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         return paths[0]
+    }
+    
+    func save() {
+        if let savedData = try? NSKeyedArchiver.archivedData(withRootObject: people, requiringSecureCoding: false) {
+            let defaults = UserDefaults.standard
+            defaults.set(savedData, forKey: "people")
+        }
     }
 }
 
