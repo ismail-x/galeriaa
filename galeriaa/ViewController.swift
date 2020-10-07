@@ -16,6 +16,17 @@ class ViewController:  UICollectionViewController, UIImagePickerControllerDelega
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewPerson))
         
+        let defaults = UserDefaults.standard
+        if let savedPeople = defaults.object(forKey: "people") as? Data {
+            let jsonDecoder = JSONDecoder()
+            
+            do {
+                people = try jsonDecoder.decode([Person].self, from: savedPeople)
+            } catch {
+                print("Failed to load epople.")
+            }
+        }
+        
     }
     
     
@@ -61,6 +72,7 @@ class ViewController:  UICollectionViewController, UIImagePickerControllerDelega
         
         let person = Person(name: "Unknown", image: imageName)
         people.append(person)
+        save()
         collectionView.reloadData()
         
         dismiss(animated: true)
@@ -79,6 +91,7 @@ class ViewController:  UICollectionViewController, UIImagePickerControllerDelega
         ac.addAction(UIAlertAction(title: "OK", style: .default) { [unowned self, ac] _ in
             let newName = ac.textFields![0]
             person.name = newName.text!
+            self.save()
 
             self.collectionView?.reloadData()
         })
@@ -89,6 +102,17 @@ class ViewController:  UICollectionViewController, UIImagePickerControllerDelega
     func getDocumentsDirectory() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         return paths[0]
+    }
+    
+    func save() {
+        let jsonEncoder = JSONEncoder()
+        
+        if let savedData = try? jsonEncoder.encode(people) {
+            let defaults = UserDefaults.standard
+            defaults.set(savedData, forKey: "people")
+        } else {
+            print("Faild to save people.")
+        }
     }
 }
 
